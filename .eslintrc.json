@@ -1,0 +1,9 @@
+{
+  "extends": ["node"],
+  "rules": {
+    "import/no-commonjs": false,
+    "semi": 2,
+    "no-multiple-empty-lines": 2,
+    "no-trailing-spaces": 2
+  }
+}
