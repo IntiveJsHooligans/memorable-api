@@ -1,7 +1,9 @@
-# import Link, Vote, LinkSubscriptionPayload, VoteSubscriptionPayload from './generated/prisma.graphql'
+# import Link, Vote, LinkSubscriptionPayload, TaskStatus, VoteSubscriptionPayload from './generated/prisma.graphql'
 
 type Query {
   feed(filter: String, skip: Int, first: Int): [Link!]!
+  tasks(filter: String, skip: Int, first: Int): [Task!]!
+  taskStatuses(filter: String, skip: Int, first: Int): [TaskStatus!]!
 }
 
 type Mutation {
@@ -9,6 +11,37 @@ type Mutation {
   signup(email: String!, password: String!, name: String!): AuthPayload
   login(email: String!, password: String!): AuthPayload
   vote(linkId: ID!): Vote
+  taskStatus(name: String!): TaskStatus
+
+  createTask(
+    completed: Int,
+    deadline: Int,
+    description: String,
+    endDate: DateTime,
+    isPrivate: Boolean,
+    originalEstimate: Int,
+    priority: Int,
+    remaining: Int,
+    startDate: DateTime,
+    status: ID,
+    title: String!
+  ): Task
+
+  updateTask(
+    id: ID!,
+    completed: Int,
+    deadline: Int,
+    description: String,
+    endDate: DateTime,
+    isPrivate: Boolean,
+    originalEstimate: Int,
+    priority: Int,
+    remaining: Int,
+    startDate: DateTime,
+    status: ID,
+  ): Task
+
+  deleteTask(id: ID!): Task
 }
 
 type Subscription {

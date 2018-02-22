@@ -19,5 +19,26 @@ type User {
   password: String!
   links: [Link!]!
   votes: [Vote!]!
+  tasks: [Task!]!
 }
 
+type Task {
+  completed: Int
+  createdBy: User
+  deadline: Int
+  description: String
+  endDate: DateTime
+  id: ID! @unique
+  isPrivate: Boolean
+  originalEstimate: Int
+  priority: Int
+  remaining: Int
+  startDate: DateTime
+  status: TaskStatus
+  title: String!
+}
+
+type TaskStatus {
+  id: ID! @unique
+  name: String!
+}
