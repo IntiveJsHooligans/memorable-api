@@ -13,6 +13,27 @@ type Link implements Node {
   votes(where: VoteWhereInput, orderBy: VoteOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Vote!]
 }
 
+type Task implements Node {
+  completed: Int
+  createdBy(where: UserWhereInput): User
+  deadline: Int
+  description: String
+  endDate: DateTime
+  id: ID!
+  isPrivate: Boolean
+  originalEstimate: Int
+  priority: Int
+  remaining: Int
+  startDate: DateTime
+  status(where: TaskStatusWhereInput): TaskStatus
+  title: String!
+}
+
+type TaskStatus implements Node {
+  id: ID!
+  name: String!
+}
+
 type User implements Node {
   id: ID!
   name: String!
@@ -20,6 +41,7 @@ type User implements Node {
   password: String!
   links(where: LinkWhereInput, orderBy: LinkOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Link!]
   votes(where: VoteWhereInput, orderBy: VoteOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Vote!]
+  tasks(where: TaskWhereInput, orderBy: TaskOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Task!]
 }
 
 type Vote implements Node {
@@ -37,6 +59,14 @@ type AggregateLink {
   count: Int!
 }
 
+type AggregateTask {
+  count: Int!
+}
+
+type AggregateTaskStatus {
+  count: Int!
+}
+
 type AggregateUser {
   count: Int!
 }
@@ -51,6 +81,8 @@ type BatchPayload {
   """
   count: Long!
 }
+
+scalar DateTime
 
 """
 A connection to a list of items.
@@ -411,21 +443,33 @@ type Mutation {
   createVote(data: VoteCreateInput!): Vote!
   createLink(data: LinkCreateInput!): Link!
   createUser(data: UserCreateInput!): User!
+  createTask(data: TaskCreateInput!): Task!
+  createTaskStatus(data: TaskStatusCreateInput!): TaskStatus!
   updateVote(data: VoteUpdateInput!, where: VoteWhereUniqueInput!): Vote
   updateLink(data: LinkUpdateInput!, where: LinkWhereUniqueInput!): Link
   updateUser(data: UserUpdateInput!, where: UserWhereUniqueInput!): User
+  updateTask(data: TaskUpdateInput!, where: TaskWhereUniqueInput!): Task
+  updateTaskStatus(data: TaskStatusUpdateInput!, where: TaskStatusWhereUniqueInput!): TaskStatus
   deleteVote(where: VoteWhereUniqueInput!): Vote
   deleteLink(where: LinkWhereUniqueInput!): Link
   deleteUser(where: UserWhereUniqueInput!): User
+  deleteTask(where: TaskWhereUniqueInput!): Task
+  deleteTaskStatus(where: TaskStatusWhereUniqueInput!): TaskStatus
   upsertVote(where: VoteWhereUniqueInput!, create: VoteCreateInput!, update: VoteUpdateInput!): Vote!
   upsertLink(where: LinkWhereUniqueInput!, create: LinkCreateInput!, update: LinkUpdateInput!): Link!
   upsertUser(where: UserWhereUniqueInput!, create: UserCreateInput!, update: UserUpdateInput!): User!
+  upsertTask(where: TaskWhereUniqueInput!, create: TaskCreateInput!, update: TaskUpdateInput!): Task!
+  upsertTaskStatus(where: TaskStatusWhereUniqueInput!, create: TaskStatusCreateInput!, update: TaskStatusUpdateInput!): TaskStatus!
   updateManyVotes(data: VoteUpdateInput!, where: VoteWhereInput!): BatchPayload!
   updateManyLinks(data: LinkUpdateInput!, where: LinkWhereInput!): BatchPayload!
   updateManyUsers(data: UserUpdateInput!, where: UserWhereInput!): BatchPayload!
+  updateManyTasks(data: TaskUpdateInput!, where: TaskWhereInput!): BatchPayload!
+  updateManyTaskStatuses(data: TaskStatusUpdateInput!, where: TaskStatusWhereInput!): BatchPayload!
   deleteManyVotes(where: VoteWhereInput!): BatchPayload!
   deleteManyLinks(where: LinkWhereInput!): BatchPayload!
   deleteManyUsers(where: UserWhereInput!): BatchPayload!
+  deleteManyTasks(where: TaskWhereInput!): BatchPayload!
+  deleteManyTaskStatuses(where: TaskStatusWhereInput!): BatchPayload!
 }
 
 enum MutationType {
@@ -470,12 +514,18 @@ type Query {
   votes(where: VoteWhereInput, orderBy: VoteOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Vote]!
   links(where: LinkWhereInput, orderBy: LinkOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Link]!
   users(where: UserWhereInput, orderBy: UserOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [User]!
+  tasks(where: TaskWhereInput, orderBy: TaskOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Task]!
+  taskStatuses(where: TaskStatusWhereInput, orderBy: TaskStatusOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [TaskStatus]!
   vote(where: VoteWhereUniqueInput!): Vote
   link(where: LinkWhereUniqueInput!): Link
   user(where: UserWhereUniqueInput!): User
+  task(where: TaskWhereUniqueInput!): Task
+  taskStatus(where: TaskStatusWhereUniqueInput!): TaskStatus
   votesConnection(where: VoteWhereInput, orderBy: VoteOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): VoteConnection!
   linksConnection(where: LinkWhereInput, orderBy: LinkOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): LinkConnection!
   usersConnection(where: UserWhereInput, orderBy: UserOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): UserConnection!
+  tasksConnection(where: TaskWhereInput, orderBy: TaskOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): TaskConnection!
+  taskStatusesConnection(where: TaskStatusWhereInput, orderBy: TaskStatusOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): TaskStatusConnection!
   """
   Fetches an object given its ID
   """
@@ -489,6 +539,820 @@ type Subscription {
   vote(where: VoteSubscriptionWhereInput): VoteSubscriptionPayload
   link(where: LinkSubscriptionWhereInput): LinkSubscriptionPayload
   user(where: UserSubscriptionWhereInput): UserSubscriptionPayload
+  task(where: TaskSubscriptionWhereInput): TaskSubscriptionPayload
+  taskStatus(where: TaskStatusSubscriptionWhereInput): TaskStatusSubscriptionPayload
+}
+
+"""
+A connection to a list of items.
+"""
+type TaskConnection {
+  """
+  Information to aid in pagination.
+  """
+  pageInfo: PageInfo!
+  """
+  A list of edges.
+  """
+  edges: [TaskEdge]!
+  aggregate: AggregateTask!
+}
+
+input TaskCreateInput {
+  completed: Int
+  deadline: Int
+  description: String
+  endDate: DateTime
+  isPrivate: Boolean
+  originalEstimate: Int
+  priority: Int
+  remaining: Int
+  startDate: DateTime
+  title: String!
+  createdBy: UserCreateOneWithoutTasksInput
+  status: TaskStatusCreateOneInput
+}
+
+input TaskCreateManyWithoutCreatedByInput {
+  create: [TaskCreateWithoutCreatedByInput!]
+  connect: [TaskWhereUniqueInput!]
+}
+
+input TaskCreateWithoutCreatedByInput {
+  completed: Int
+  deadline: Int
+  description: String
+  endDate: DateTime
+  isPrivate: Boolean
+  originalEstimate: Int
+  priority: Int
+  remaining: Int
+  startDate: DateTime
+  title: String!
+  status: TaskStatusCreateOneInput
+}
+
+"""
+An edge in a connection.
+"""
+type TaskEdge {
+  """
+  The item at the end of the edge.
+  """
+  node: Task!
+  """
+  A cursor for use in pagination.
+  """
+  cursor: String!
+}
+
+enum TaskOrderByInput {
+  completed_ASC
+  completed_DESC
+  deadline_ASC
+  deadline_DESC
+  description_ASC
+  description_DESC
+  endDate_ASC
+  endDate_DESC
+  id_ASC
+  id_DESC
+  isPrivate_ASC
+  isPrivate_DESC
+  originalEstimate_ASC
+  originalEstimate_DESC
+  priority_ASC
+  priority_DESC
+  remaining_ASC
+  remaining_DESC
+  startDate_ASC
+  startDate_DESC
+  title_ASC
+  title_DESC
+  updatedAt_ASC
+  updatedAt_DESC
+  createdAt_ASC
+  createdAt_DESC
+}
+
+type TaskPreviousValues {
+  completed: Int
+  deadline: Int
+  description: String
+  endDate: DateTime
+  id: ID!
+  isPrivate: Boolean
+  originalEstimate: Int
+  priority: Int
+  remaining: Int
+  startDate: DateTime
+  title: String!
+}
+
+"""
+A connection to a list of items.
+"""
+type TaskStatusConnection {
+  """
+  Information to aid in pagination.
+  """
+  pageInfo: PageInfo!
+  """
+  A list of edges.
+  """
+  edges: [TaskStatusEdge]!
+  aggregate: AggregateTaskStatus!
+}
+
+input TaskStatusCreateInput {
+  name: String!
+}
+
+input TaskStatusCreateOneInput {
+  create: TaskStatusCreateInput
+  connect: TaskStatusWhereUniqueInput
+}
+
+"""
+An edge in a connection.
+"""
+type TaskStatusEdge {
+  """
+  The item at the end of the edge.
+  """
+  node: TaskStatus!
+  """
+  A cursor for use in pagination.
+  """
+  cursor: String!
+}
+
+enum TaskStatusOrderByInput {
+  id_ASC
+  id_DESC
+  name_ASC
+  name_DESC
+  updatedAt_ASC
+  updatedAt_DESC
+  createdAt_ASC
+  createdAt_DESC
+}
+
+type TaskStatusPreviousValues {
+  id: ID!
+  name: String!
+}
+
+type TaskStatusSubscriptionPayload {
+  mutation: MutationType!
+  node: TaskStatus
+  updatedFields: [String!]
+  previousValues: TaskStatusPreviousValues
+}
+
+input TaskStatusSubscriptionWhereInput {
+  """
+  Logical AND on all given filters.
+  """
+  AND: [TaskStatusSubscriptionWhereInput!]
+  """
+  Logical OR on all given filters.
+  """
+  OR: [TaskStatusSubscriptionWhereInput!]
+  """
+  The subscription event gets dispatched when it's listed in mutation_in
+  """
+  mutation_in: [MutationType!]
+  """
+  The subscription event gets only dispatched when one of the updated fields names is included in this list
+  """
+  updatedFields_contains: String
+  """
+  The subscription event gets only dispatched when all of the field names included in this list have been updated
+  """
+  updatedFields_contains_every: [String!]
+  """
+  The subscription event gets only dispatched when some of the field names included in this list have been updated
+  """
+  updatedFields_contains_some: [String!]
+  node: TaskStatusWhereInput
+}
+
+input TaskStatusUpdateDataInput {
+  name: String
+}
+
+input TaskStatusUpdateInput {
+  name: String
+}
+
+input TaskStatusUpdateNestedInput {
+  where: TaskStatusWhereUniqueInput!
+  data: TaskStatusUpdateDataInput!
+}
+
+input TaskStatusUpdateOneInput {
+  create: TaskStatusCreateInput
+  connect: TaskStatusWhereUniqueInput
+  disconnect: TaskStatusWhereUniqueInput
+  delete: TaskStatusWhereUniqueInput
+  update: TaskStatusUpdateNestedInput
+  upsert: TaskStatusUpsertNestedInput
+}
+
+input TaskStatusUpsertNestedInput {
+  where: TaskStatusWhereUniqueInput!
+  update: TaskStatusUpdateDataInput!
+  create: TaskStatusCreateInput!
+}
+
+input TaskStatusWhereInput {
+  """
+  Logical AND on all given filters.
+  """
+  AND: [TaskStatusWhereInput!]
+  """
+  Logical OR on all given filters.
+  """
+  OR: [TaskStatusWhereInput!]
+  id: ID
+  """
+  All values that are not equal to given value.
+  """
+  id_not: ID
+  """
+  All values that are contained in given list.
+  """
+  id_in: [ID!]
+  """
+  All values that are not contained in given list.
+  """
+  id_not_in: [ID!]
+  """
+  All values less than the given value.
+  """
+  id_lt: ID
+  """
+  All values less than or equal the given value.
+  """
+  id_lte: ID
+  """
+  All values greater than the given value.
+  """
+  id_gt: ID
+  """
+  All values greater than or equal the given value.
+  """
+  id_gte: ID
+  """
+  All values containing the given string.
+  """
+  id_contains: ID
+  """
+  All values not containing the given string.
+  """
+  id_not_contains: ID
+  """
+  All values starting with the given string.
+  """
+  id_starts_with: ID
+  """
+  All values not starting with the given string.
+  """
+  id_not_starts_with: ID
+  """
+  All values ending with the given string.
+  """
+  id_ends_with: ID
+  """
+  All values not ending with the given string.
+  """
+  id_not_ends_with: ID
+  name: String
+  """
+  All values that are not equal to given value.
+  """
+  name_not: String
+  """
+  All values that are contained in given list.
+  """
+  name_in: [String!]
+  """
+  All values that are not contained in given list.
+  """
+  name_not_in: [String!]
+  """
+  All values less than the given value.
+  """
+  name_lt: String
+  """
+  All values less than or equal the given value.
+  """
+  name_lte: String
+  """
+  All values greater than the given value.
+  """
+  name_gt: String
+  """
+  All values greater than or equal the given value.
+  """
+  name_gte: String
+  """
+  All values containing the given string.
+  """
+  name_contains: String
+  """
+  All values not containing the given string.
+  """
+  name_not_contains: String
+  """
+  All values starting with the given string.
+  """
+  name_starts_with: String
+  """
+  All values not starting with the given string.
+  """
+  name_not_starts_with: String
+  """
+  All values ending with the given string.
+  """
+  name_ends_with: String
+  """
+  All values not ending with the given string.
+  """
+  name_not_ends_with: String
+}
+
+input TaskStatusWhereUniqueInput {
+  id: ID
+}
+
+type TaskSubscriptionPayload {
+  mutation: MutationType!
+  node: Task
+  updatedFields: [String!]
+  previousValues: TaskPreviousValues
+}
+
+input TaskSubscriptionWhereInput {
+  """
+  Logical AND on all given filters.
+  """
+  AND: [TaskSubscriptionWhereInput!]
+  """
+  Logical OR on all given filters.
+  """
+  OR: [TaskSubscriptionWhereInput!]
+  """
+  The subscription event gets dispatched when it's listed in mutation_in
+  """
+  mutation_in: [MutationType!]
+  """
+  The subscription event gets only dispatched when one of the updated fields names is included in this list
+  """
+  updatedFields_contains: String
+  """
+  The subscription event gets only dispatched when all of the field names included in this list have been updated
+  """
+  updatedFields_contains_every: [String!]
+  """
+  The subscription event gets only dispatched when some of the field names included in this list have been updated
+  """
+  updatedFields_contains_some: [String!]
+  node: TaskWhereInput
+}
+
+input TaskUpdateInput {
+  completed: Int
+  deadline: Int
+  description: String
+  endDate: DateTime
+  isPrivate: Boolean
+  originalEstimate: Int
+  priority: Int
+  remaining: Int
+  startDate: DateTime
+  title: String
+  createdBy: UserUpdateOneWithoutTasksInput
+  status: TaskStatusUpdateOneInput
+}
+
+input TaskUpdateManyWithoutCreatedByInput {
+  create: [TaskCreateWithoutCreatedByInput!]
+  connect: [TaskWhereUniqueInput!]
+  disconnect: [TaskWhereUniqueInput!]
+  delete: [TaskWhereUniqueInput!]
+  update: [TaskUpdateWithoutCreatedByInput!]
+  upsert: [TaskUpsertWithoutCreatedByInput!]
+}
+
+input TaskUpdateWithoutCreatedByDataInput {
+  completed: Int
+  deadline: Int
+  description: String
+  endDate: DateTime
+  isPrivate: Boolean
+  originalEstimate: Int
+  priority: Int
+  remaining: Int
+  startDate: DateTime
+  title: String
+  status: TaskStatusUpdateOneInput
+}
+
+input TaskUpdateWithoutCreatedByInput {
+  where: TaskWhereUniqueInput!
+  data: TaskUpdateWithoutCreatedByDataInput!
+}
+
+input TaskUpsertWithoutCreatedByInput {
+  where: TaskWhereUniqueInput!
+  update: TaskUpdateWithoutCreatedByDataInput!
+  create: TaskCreateWithoutCreatedByInput!
+}
+
+input TaskWhereInput {
+  """
+  Logical AND on all given filters.
+  """
+  AND: [TaskWhereInput!]
+  """
+  Logical OR on all given filters.
+  """
+  OR: [TaskWhereInput!]
+  completed: Int
+  """
+  All values that are not equal to given value.
+  """
+  completed_not: Int
+  """
+  All values that are contained in given list.
+  """
+  completed_in: [Int!]
+  """
+  All values that are not contained in given list.
+  """
+  completed_not_in: [Int!]
+  """
+  All values less than the given value.
+  """
+  completed_lt: Int
+  """
+  All values less than or equal the given value.
+  """
+  completed_lte: Int
+  """
+  All values greater than the given value.
+  """
+  completed_gt: Int
+  """
+  All values greater than or equal the given value.
+  """
+  completed_gte: Int
+  deadline: Int
+  """
+  All values that are not equal to given value.
+  """
+  deadline_not: Int
+  """
+  All values that are contained in given list.
+  """
+  deadline_in: [Int!]
+  """
+  All values that are not contained in given list.
+  """
+  deadline_not_in: [Int!]
+  """
+  All values less than the given value.
+  """
+  deadline_lt: Int
+  """
+  All values less than or equal the given value.
+  """
+  deadline_lte: Int
+  """
+  All values greater than the given value.
+  """
+  deadline_gt: Int
+  """
+  All values greater than or equal the given value.
+  """
+  deadline_gte: Int
+  description: String
+  """
+  All values that are not equal to given value.
+  """
+  description_not: String
+  """
+  All values that are contained in given list.
+  """
+  description_in: [String!]
+  """
+  All values that are not contained in given list.
+  """
+  description_not_in: [String!]
+  """
+  All values less than the given value.
+  """
+  description_lt: String
+  """
+  All values less than or equal the given value.
+  """
+  description_lte: String
+  """
+  All values greater than the given value.
+  """
+  description_gt: String
+  """
+  All values greater than or equal the given value.
+  """
+  description_gte: String
+  """
+  All values containing the given string.
+  """
+  description_contains: String
+  """
+  All values not containing the given string.
+  """
+  description_not_contains: String
+  """
+  All values starting with the given string.
+  """
+  description_starts_with: String
+  """
+  All values not starting with the given string.
+  """
+  description_not_starts_with: String
+  """
+  All values ending with the given string.
+  """
+  description_ends_with: String
+  """
+  All values not ending with the given string.
+  """
+  description_not_ends_with: String
+  endDate: DateTime
+  """
+  All values that are not equal to given value.
+  """
+  endDate_not: DateTime
+  """
+  All values that are contained in given list.
+  """
+  endDate_in: [DateTime!]
+  """
+  All values that are not contained in given list.
+  """
+  endDate_not_in: [DateTime!]
+  """
+  All values less than the given value.
+  """
+  endDate_lt: DateTime
+  """
+  All values less than or equal the given value.
+  """
+  endDate_lte: DateTime
+  """
+  All values greater than the given value.
+  """
+  endDate_gt: DateTime
+  """
+  All values greater than or equal the given value.
+  """
+  endDate_gte: DateTime
+  id: ID
+  """
+  All values that are not equal to given value.
+  """
+  id_not: ID
+  """
+  All values that are contained in given list.
+  """
+  id_in: [ID!]
+  """
+  All values that are not contained in given list.
+  """
+  id_not_in: [ID!]
+  """
+  All values less than the given value.
+  """
+  id_lt: ID
+  """
+  All values less than or equal the given value.
+  """
+  id_lte: ID
+  """
+  All values greater than the given value.
+  """
+  id_gt: ID
+  """
+  All values greater than or equal the given value.
+  """
+  id_gte: ID
+  """
+  All values containing the given string.
+  """
+  id_contains: ID
+  """
+  All values not containing the given string.
+  """
+  id_not_contains: ID
+  """
+  All values starting with the given string.
+  """
+  id_starts_with: ID
+  """
+  All values not starting with the given string.
+  """
+  id_not_starts_with: ID
+  """
+  All values ending with the given string.
+  """
+  id_ends_with: ID
+  """
+  All values not ending with the given string.
+  """
+  id_not_ends_with: ID
+  isPrivate: Boolean
+  """
+  All values that are not equal to given value.
+  """
+  isPrivate_not: Boolean
+  originalEstimate: Int
+  """
+  All values that are not equal to given value.
+  """
+  originalEstimate_not: Int
+  """
+  All values that are contained in given list.
+  """
+  originalEstimate_in: [Int!]
+  """
+  All values that are not contained in given list.
+  """
+  originalEstimate_not_in: [Int!]
+  """
+  All values less than the given value.
+  """
+  originalEstimate_lt: Int
+  """
+  All values less than or equal the given value.
+  """
+  originalEstimate_lte: Int
+  """
+  All values greater than the given value.
+  """
+  originalEstimate_gt: Int
+  """
+  All values greater than or equal the given value.
+  """
+  originalEstimate_gte: Int
+  priority: Int
+  """
+  All values that are not equal to given value.
+  """
+  priority_not: Int
+  """
+  All values that are contained in given list.
+  """
+  priority_in: [Int!]
+  """
+  All values that are not contained in given list.
+  """
+  priority_not_in: [Int!]
+  """
+  All values less than the given value.
+  """
+  priority_lt: Int
+  """
+  All values less than or equal the given value.
+  """
+  priority_lte: Int
+  """
+  All values greater than the given value.
+  """
+  priority_gt: Int
+  """
+  All values greater than or equal the given value.
+  """
+  priority_gte: Int
+  remaining: Int
+  """
+  All values that are not equal to given value.
+  """
+  remaining_not: Int
+  """
+  All values that are contained in given list.
+  """
+  remaining_in: [Int!]
+  """
+  All values that are not contained in given list.
+  """
+  remaining_not_in: [Int!]
+  """
+  All values less than the given value.
+  """
+  remaining_lt: Int
+  """
+  All values less than or equal the given value.
+  """
+  remaining_lte: Int
+  """
+  All values greater than the given value.
+  """
+  remaining_gt: Int
+  """
+  All values greater than or equal the given value.
+  """
+  remaining_gte: Int
+  startDate: DateTime
+  """
+  All values that are not equal to given value.
+  """
+  startDate_not: DateTime
+  """
+  All values that are contained in given list.
+  """
+  startDate_in: [DateTime!]
+  """
+  All values that are not contained in given list.
+  """
+  startDate_not_in: [DateTime!]
+  """
+  All values less than the given value.
+  """
+  startDate_lt: DateTime
+  """
+  All values less than or equal the given value.
+  """
+  startDate_lte: DateTime
+  """
+  All values greater than the given value.
+  """
+  startDate_gt: DateTime
+  """
+  All values greater than or equal the given value.
+  """
+  startDate_gte: DateTime
+  title: String
+  """
+  All values that are not equal to given value.
+  """
+  title_not: String
+  """
+  All values that are contained in given list.
+  """
+  title_in: [String!]
+  """
+  All values that are not contained in given list.
+  """
+  title_not_in: [String!]
+  """
+  All values less than the given value.
+  """
+  title_lt: String
+  """
+  All values less than or equal the given value.
+  """
+  title_lte: String
+  """
+  All values greater than the given value.
+  """
+  title_gt: String
+  """
+  All values greater than or equal the given value.
+  """
+  title_gte: String
+  """
+  All values containing the given string.
+  """
+  title_contains: String
+  """
+  All values not containing the given string.
+  """
+  title_not_contains: String
+  """
+  All values starting with the given string.
+  """
+  title_starts_with: String
+  """
+  All values not starting with the given string.
+  """
+  title_not_starts_with: String
+  """
+  All values ending with the given string.
+  """
+  title_ends_with: String
+  """
+  All values not ending with the given string.
+  """
+  title_not_ends_with: String
+  createdBy: UserWhereInput
+  status: TaskStatusWhereInput
+}
+
+input TaskWhereUniqueInput {
+  id: ID
 }
 
 """
@@ -512,10 +1376,16 @@ input UserCreateInput {
   password: String!
   links: LinkCreateManyWithoutPostedByInput
   votes: VoteCreateManyWithoutUserInput
+  tasks: TaskCreateManyWithoutCreatedByInput
 }
 
 input UserCreateOneWithoutLinksInput {
   create: UserCreateWithoutLinksInput
+  connect: UserWhereUniqueInput
+}
+
+input UserCreateOneWithoutTasksInput {
+  create: UserCreateWithoutTasksInput
   connect: UserWhereUniqueInput
 }
 
@@ -529,6 +1399,15 @@ input UserCreateWithoutLinksInput {
   email: String!
   password: String!
   votes: VoteCreateManyWithoutUserInput
+  tasks: TaskCreateManyWithoutCreatedByInput
+}
+
+input UserCreateWithoutTasksInput {
+  name: String!
+  email: String!
+  password: String!
+  links: LinkCreateManyWithoutPostedByInput
+  votes: VoteCreateManyWithoutUserInput
 }
 
 input UserCreateWithoutVotesInput {
@@ -536,6 +1415,7 @@ input UserCreateWithoutVotesInput {
   email: String!
   password: String!
   links: LinkCreateManyWithoutPostedByInput
+  tasks: TaskCreateManyWithoutCreatedByInput
 }
 
 """
@@ -615,6 +1495,7 @@ input UserUpdateInput {
   password: String
   links: LinkUpdateManyWithoutPostedByInput
   votes: VoteUpdateManyWithoutUserInput
+  tasks: TaskUpdateManyWithoutCreatedByInput
 }
 
 input UserUpdateOneWithoutLinksInput {
@@ -624,6 +1505,15 @@ input UserUpdateOneWithoutLinksInput {
   delete: UserWhereUniqueInput
   update: UserUpdateWithoutLinksInput
   upsert: UserUpsertWithoutLinksInput
+}
+
+input UserUpdateOneWithoutTasksInput {
+  create: UserCreateWithoutTasksInput
+  connect: UserWhereUniqueInput
+  disconnect: UserWhereUniqueInput
+  delete: UserWhereUniqueInput
+  update: UserUpdateWithoutTasksInput
+  upsert: UserUpsertWithoutTasksInput
 }
 
 input UserUpdateOneWithoutVotesInput {
@@ -640,6 +1530,7 @@ input UserUpdateWithoutLinksDataInput {
   email: String
   password: String
   votes: VoteUpdateManyWithoutUserInput
+  tasks: TaskUpdateManyWithoutCreatedByInput
 }
 
 input UserUpdateWithoutLinksInput {
@@ -647,11 +1538,25 @@ input UserUpdateWithoutLinksInput {
   data: UserUpdateWithoutLinksDataInput!
 }
 
+input UserUpdateWithoutTasksDataInput {
+  name: String
+  email: String
+  password: String
+  links: LinkUpdateManyWithoutPostedByInput
+  votes: VoteUpdateManyWithoutUserInput
+}
+
+input UserUpdateWithoutTasksInput {
+  where: UserWhereUniqueInput!
+  data: UserUpdateWithoutTasksDataInput!
+}
+
 input UserUpdateWithoutVotesDataInput {
   name: String
   email: String
   password: String
   links: LinkUpdateManyWithoutPostedByInput
+  tasks: TaskUpdateManyWithoutCreatedByInput
 }
 
 input UserUpdateWithoutVotesInput {
@@ -663,6 +1568,12 @@ input UserUpsertWithoutLinksInput {
   where: UserWhereUniqueInput!
   update: UserUpdateWithoutLinksDataInput!
   create: UserCreateWithoutLinksInput!
+}
+
+input UserUpsertWithoutTasksInput {
+  where: UserWhereUniqueInput!
+  update: UserUpdateWithoutTasksDataInput!
+  create: UserCreateWithoutTasksInput!
 }
 
 input UserUpsertWithoutVotesInput {
@@ -898,6 +1809,9 @@ input UserWhereInput {
   votes_every: VoteWhereInput
   votes_some: VoteWhereInput
   votes_none: VoteWhereInput
+  tasks_every: TaskWhereInput
+  tasks_some: TaskWhereInput
+  tasks_none: TaskWhereInput
 }
 
 input UserWhereUniqueInput {

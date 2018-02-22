@@ -1,5 +1,5 @@
 {
-  "name": "hackernews-node",
+  "name": "memorable-api",
   "scripts": {
     "start": "node src/index.js",
     "dev": "npm-run-all --parallel start playground",
@@ -11,9 +11,10 @@
     "hooks": {
       "pre-commit": "eslint ."
     }
-  },  
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "graphql": "^0.13.1",
     "graphql-yoga": "1.3.3",
     "jsonwebtoken": "^8.1.1",
     "prisma-binding": "1.5.12"

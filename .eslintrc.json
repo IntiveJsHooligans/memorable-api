@@ -3,7 +3,15 @@
   "rules": {
     "import/no-commonjs": false,
     "semi": 2,
+    "comma-dangle": ["error", {
+      "arrays": "always-multiline",
+      "objects": "always-multiline",
+      "imports": "always-multiline",
+      "exports": "always-multiline",
+      "functions": "ignore"
+    }],
     "no-multiple-empty-lines": 2,
-    "no-trailing-spaces": 2
+    "eol-last": 2,
+    "newline-before-return": 2
   }
 }

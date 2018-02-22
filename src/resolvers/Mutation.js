@@ -4,6 +4,7 @@ const { APP_SECRET, getUserId } = require('../utils');
 
 function post(parent, { url, description }, context, info) {
   const userId = getUserId(context);
+
   return context.db.mutation.createLink(
     { data: { url, description, postedBy: { connect: { id: userId } } } },
     info,
@@ -65,9 +66,122 @@ async function vote(parent, args, context, info) {
   );
 }
 
+async function taskStatus(parent, args, context, info) {
+  const { name } = args;
+  const statusExists = await context.db.exists.TaskStatus({
+    name: { name },
+  });
+  if (statusExists) {
+    throw new Error(`Task status exists: ${name}`);
+  }
+
+  return context.db.mutation.createTaskStatus(
+    {
+      data: {
+        name,
+      },
+    },
+    info,
+  );
+}
+
+function createTask(parent, args, context, info) {
+  const userId = getUserId(context);
+
+  const {
+    completed,
+    deadline,
+    description,
+    endDate,
+    isPrivate,
+    originalEstimate,
+    priority,
+    remaining,
+    startDate,
+    status,
+    title,
+  } = args;
+
+  return context.db.mutation.createTask(
+    {
+      data: {
+        createdBy: { connect: { id: userId } },
+        completed,
+        deadline,
+        description,
+        endDate,
+        isPrivate,
+        originalEstimate,
+        priority,
+        remaining,
+        startDate,
+        status,
+        title,
+      },
+    },
+    info,
+  );
+}
+
+function updateTask(parent, args, context, info) {
+  const {
+    completed,
+    deadline,
+    description,
+    endDate,
+    id,
+    isPrivate,
+    originalEstimate,
+    priority,
+    remaining,
+    startDate,
+    status,
+    title,
+  } = args;
+
+  return context.db.mutation.updateTask(
+    {
+      where: {
+        id,
+      },
+      data: {
+        completed,
+        deadline,
+        description,
+        endDate,
+        isPrivate,
+        originalEstimate,
+        priority,
+        remaining,
+        startDate,
+        status,
+        title,
+      },
+    },
+    info,
+  );
+}
+
+function deleteTask(parent, args, context, info) {
+  const { id } = args;
+
+  return context.db.mutation.deleteTask(
+    {
+      where: {
+        id,
+      },
+    },
+    info,
+  );
+}
+
 module.exports = {
   post,
   signup,
   login,
   vote,
+  taskStatus,
+  createTask,
+  updateTask,
+  deleteTask,
 };
